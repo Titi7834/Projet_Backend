@@ -1,67 +1,96 @@
-const jwt = require("jsonwebtoken");
-const { findByEmailOrUsername } = require("../data/users");
+const jwt = require('jsonwebtoken');
+const User = require('../model/user');
 
-const JWT_SECRET = process.env.JWT_SECRET || "DEV_SECRET_CHANGE_ME";
-const JWT_EXPIRES_IN = "1h";
+require('dotenv').config();
 
-function generateToken(user) {
-  const payload = {
-    sub: user.id,
-    email: user.email,
-    username: user.username,
-    role: user.role
-  };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-}
+const JWT_SECRET = process.env.JWT_SECRET;
 
-async function authMiddleware(req, res, next) {
-  const authHeader = req.headers["authorization"];
+/**
+ * Middleware d'authentification
+ * Vérifie le JWT token et ajoute les infos utilisateur à req.user
+ */
+const authMiddleware = async (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
 
-  if (!authHeader) {
-    return res.status(401).json({ error: "Missing Authorization header" });
-  }
+        if (!authHeader) {
+            return res.status(401).json({
+                success: false,
+                message: 'Authorization header manquant'
+            });
+        }
 
-  const [type, token] = authHeader.split(" ");
-  if (type !== "Bearer" || !token) {
-    return res.status(401).json({ error: "Invalid Authorization format" });
-  }
+        const [type, token] = authHeader.split(' ');
+        
+        if (type !== 'Bearer' || !token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Format du header Authorization invalide. Utilisez: Bearer <token>'
+            });
+        }
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    // Dans un vrai projet, on irait chercher l'utilisateur en DB par decoded.sub
-    const user = findByEmailOrUsername(decoded.email);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            
+            const user = await User.findById(decoded.userId);
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Utilisateur non trouvé'
+                });
+            }
+
+            req.user = {
+                userId: user._id,
+                email: user.email,
+                username: user.username,
+                role: user.role
+            };
+
+            next();
+        } catch (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Token expiré'
+                });
+            }
+            throw err;
+        }
+    } catch (error) {
+        console.error('Erreur d\'authentification:', error);
+        return res.status(401).json({
+            success: false,
+            message: 'Token invalide ou expiré'
+        });
     }
-    req.user = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role
+};
+
+/**
+ * Middleware pour vérifier les rôles
+ * @param {...string} allowedRoles - Les rôles autorisés
+ */
+const requireRole = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Utilisateur non authentifié'
+            });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: `Accès refusé. Rôles autorisés: ${allowedRoles.join(', ')}`
+            });
+        }
+
+        next();
     };
-    next();
-  } catch (err) {
-    console.error("JWT error:", err);
-    return res.status(401).json({ error: "Invalid or expired token" });
-  }
-}
-
-function requireRole(...allowedRoles) {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res
-        .status(401)
-        .json({ error: "User not authenticated (no user on request)" });
-    }
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Forbidden: insufficient role" });
-    }
-    next();
-  };
-}
+};
 
 module.exports = {
-  authMiddleware,
-  generateToken,
-  requireRole
+    authMiddleware,
+    requireRole
 };

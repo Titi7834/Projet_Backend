@@ -1,33 +1,47 @@
-const express = require("express");
-const cors = require("cors");
-const authRoutes = require("./routes/authRoutes");
-const protectedRoutes = require("./routes/protectedRoutes");
-const { authMiddleware } = require("./middleware/authMiddleware");
+require('dotenv').config();
+
+const express = require('express');
+const { connectDB } = require('./config/database');
+const authRoutes = require('./routes/authRoutes');
+const protectedRoutes = require('./routes/protectedRoutes');
+const { authMiddleware } = require('./middleware/authMiddleware');
 
 const app = express();
 
-app.use(cors());
+// Middlewares
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Route publique de base
-app.get("/", (req, res) => {
-  res.json({
-    message: "Exemple API Express avec JWT + rôles",
-    login: "/auth/login",
-    docs: "Voir README pour les exemples d'appels"
-  });
-});
+// Routes publiques
+app.use('/auth', authRoutes);
 
-// Routes d'auth
-app.use("/auth", authRoutes);
+// Routes protégées
+app.use('/api', authMiddleware, protectedRoutes);
 
-// Routes protégées (nécessitent JWT)
-app.use("/api", authMiddleware, protectedRoutes);
-
-// Gestion d'erreurs générique
+// Gestion des erreurs (middleware d'erreur)
 app.use((err, req, res, next) => {
-  console.error("Unexpected error:", err);
-  res.status(500).json({ error: "Internal server error" });
+    console.error('Erreur:', err);
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Erreur interne du serveur'
+    });
 });
+
+const PORT = process.env.PORT || 3000;
+
+async function startServer() {
+    try {
+        await connectDB();
+        
+        app.listen(PORT, () => {
+            console.log(`Serveur auth-service démarré au port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Erreur au démarrage du serveur:', error);
+        process.exit(1);
+    }
+}
+
+startServer();
 
 module.exports = app;
