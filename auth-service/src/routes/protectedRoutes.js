@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllUsers, updateUserRole } = require('../controllers/adminController');
+const { getAllUsers, updateUserRole, updateReput } = require('../controllers/adminController');
 const { requireRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -16,6 +16,11 @@ router.get('/admin/users', requireRole('ADMIN'), getAllUsers);
  */
 router.patch('/users/:id/role', requireRole('ADMIN'), updateUserRole);
 
-module.exports = router;
+/**
+ * PATCH /users/:id/reputation
+ * Modifier la réputation d'un utilisateur (ADMIN uniquement)
+ * En renseignant dans le body le score à ajouter (+) ou enlever (-)
+*/
+router.patch('/users/:id/reputation', requireRole('ADMIN'), updateReput);
 
 module.exports = router;
