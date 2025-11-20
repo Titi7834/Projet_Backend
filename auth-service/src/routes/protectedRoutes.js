@@ -19,7 +19,7 @@ router.patch('/users/:id/role', requireRole('ADMIN'), updateUserRole);
 /**
  * PATCH /users/:id/reputation
  * Modifier la réputation d'un utilisateur (ADMIN uniquement)
- * En renseignant dans le body le score à ajouter (+) ou enlever (-)
+ * Modifie la réputation d'un user avec son ID un chiffre positif pour ajouter ou négatif pour enlever
 */
 router.patch('/users/:id/reputation', requireRole('ADMIN'), updateReput);
 

@@ -81,6 +81,11 @@ const updateUserRole = async (req, res) => {
     }
 };
 
+
+/**
+ * PATCH /users/:id/reputation
+ * Modifie la réputation d'un user avec son ID un chiffre positif pour ajouter ou négatif pour enlever
+ */
 const updateReput = async(req, res) => {
     const { id } = req.params;
     const { reputation } = req.body;
