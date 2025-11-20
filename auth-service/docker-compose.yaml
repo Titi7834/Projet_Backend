@@ -1,0 +1,21 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: auth-service
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=adminpassword
+      - MONGO_INITDB_DATABASE=auth-service
+    ports:
+      - "27017:27017"
+    volumes: 
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
