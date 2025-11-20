@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 
 const userSchema = mongoose.Schema(
     {
@@ -67,8 +67,8 @@ userSchema.pre('save', async function(next) {
     }
 
     try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
+        const salt = await bcryptjs.genSalt(10);
+        this.password = await bcryptjs.hash(this.password, salt);
         next();
     } catch (err) {
         next(err);
@@ -78,7 +78,7 @@ userSchema.pre('save', async function(next) {
 // Méthode pour comparer les mots de passe
 userSchema.methods.comparePassword = async function(passwordToCompare) {
     try {
-        return await bcrypt.compare(passwordToCompare, this.password);
+        return await bcryptjs.compare(passwordToCompare, this.password);
     } catch (err) {
         throw new Error('Erreur lors de la comparaison du mot de passe');
     }

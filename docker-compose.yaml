@@ -1,0 +1,56 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
+      MONGO_INITDB_DATABASE: projet_backend
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - backend-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "4000:3000"
+    environment:
+      PORT: 3000
+      MONGODB_URI: mongodb://admin:adminpassword@mongodb:27017/projet_backend?authSource=admin
+      JWT_SECRET: your-secret-key-change-this-in-production
+      OBSERVATION_SERVICE_URL: http://observation-service:3002
+    depends_on:
+      - mongodb
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  observation-service:
+    build:
+      context: ./observation-service
+      dockerfile: Dockerfile
+    container_name: observation-service
+    ports:
+      - "4002:3002"
+    environment:
+      PORT: 3002
+      MONGODB_URI: mongodb://admin:adminpassword@mongodb:27017/projet_backend?authSource=admin
+      JWT_SECRET: your-secret-key-change-this-in-production
+      AUTH_SERVICE_URL: http://auth-service:3000
+    depends_on:
+      - mongodb
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+
+networks:
+  backend-network:
+    driver: bridge

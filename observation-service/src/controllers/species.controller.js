@@ -8,6 +8,15 @@ import { Observation } from '../models/Observation.js';
 export const createSpecies = async (req, res) => {
   try {
     const { name } = req.body;
+    
+    // Vérifier que l'utilisateur est authentifié
+    if (!req.user || !req.user.id) {
+      console.error('[CREATE SPECIES] User not authenticated or ID missing');
+      return res.status(401).json({ 
+        error: 'Authentification requise',
+        details: 'req.user ou req.user.id est undefined'
+      });
+    }
 
     if (!name || name.trim() === '') {
       return res.status(400).json({ error: 'Le nom de l\'espèce est obligatoire' });

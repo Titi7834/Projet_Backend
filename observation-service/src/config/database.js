@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://admin:admin123@localhost:27017/observation-service?authSource=admin';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://admin:adminpassword@localhost:27017/projet_backend?authSource=admin';
 
 export const connectDB = async () => {
   try {
