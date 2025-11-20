@@ -1,0 +1,291 @@
+{
+  "info": {
+    "name": "DeepSea Archives - Observation Service",
+    "description": "Collection Postman pour tester le microservice observation-service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "authUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "speciesId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "observationId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"]
+        }
+      }
+    },
+    {
+      "name": "Species",
+      "item": [
+        {
+          "name": "Create Species",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('speciesId', jsonData.species.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Poisson-Dragon Abyssal\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/species",
+              "host": ["{{baseUrl}}"],
+              "path": ["species"]
+            }
+          }
+        },
+        {
+          "name": "Get Species by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/species/{{speciesId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["species", "{{speciesId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Species",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/species",
+              "host": ["{{baseUrl}}"],
+              "path": ["species"]
+            }
+          }
+        },
+        {
+          "name": "Get Species Sorted by Rarity (DESC)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/species?sortByRarity=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["species"],
+              "query": [
+                {
+                  "key": "sortByRarity",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Species Observations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/species/{{speciesId}}/observations",
+              "host": ["{{baseUrl}}"],
+              "path": ["species", "{{speciesId}}", "observations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Observations",
+      "item": [
+        {
+          "name": "Create Observation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('observationId', jsonData.observation.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Observation fascinante de tentacules bioluminescents mesurant plus de 10 mètres dans les profondeurs abyssales\",\n  \"dangerLevel\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/observations",
+              "host": ["{{baseUrl}}"],
+              "path": ["observations"]
+            }
+          }
+        },
+        {
+          "name": "Validate Observation (EXPERT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/observations/{{observationId}}/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["observations", "{{observationId}}", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Reject Observation (EXPERT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/observations/{{observationId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["observations", "{{observationId}}", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth (from auth-service)",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@deepsea.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{authUrl}}/auth/login",
+              "host": ["{{authUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

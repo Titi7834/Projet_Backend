@@ -1,0 +1,30 @@
+{
+  "name": "observation-service",
+  "version": "1.0.0",
+  "description": "DeepSea Archives - Observation Microservice with Mongoose",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "microservice",
+    "express",
+    "mongoose",
+    "jwt",
+    "deepsea"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.20.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
