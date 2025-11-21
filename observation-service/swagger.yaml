@@ -1,0 +1,601 @@
+openapi: 3.0.3
+info:
+  title: Observation Service API
+  description: Service de gestion des observations et des espèces
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:4002
+    description: Serveur de développement
+  - url: http://localhost:3002
+    description: Serveur interne (Docker)
+
+tags:
+  - name: Species
+    description: Gestion des espèces
+  - name: Observations
+    description: Gestion des observations
+  - name: Moderation
+    description: Modération (EXPERT/ADMIN)
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Vérifier l'état de santé du service
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service opérationnel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: observation-service
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/species:
+    get:
+      summary: Récupérer toutes les espèces
+      description: Liste de toutes les espèces non supprimées
+      tags:
+        - Species
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste des espèces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Species'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Créer une nouvelle espèce
+      description: Ajouter une espèce à la base de données
+      tags:
+        - Species
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Panthera tigris
+      responses:
+        '201':
+          description: Espèce créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Species'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Espèce déjà existante
+
+  /api/species/{id}:
+    get:
+      summary: Récupérer une espèce par ID
+      description: Détails d'une espèce spécifique
+      tags:
+        - Species
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'espèce
+      responses:
+        '200':
+          description: Détails de l'espèce
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Species'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/species/{id}/observations:
+    get:
+      summary: Récupérer les observations d'une espèce
+      description: Liste des observations validées pour une espèce
+      tags:
+        - Species
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'espèce
+      responses:
+        '200':
+          description: Liste des observations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Observation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/observations:
+    post:
+      summary: Créer une observation
+      description: Soumettre une nouvelle observation d'espèce
+      tags:
+        - Observations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - speciesId
+                - description
+                - dangerLevel
+              properties:
+                speciesId:
+                  type: string
+                  example: 507f1f77bcf86cd799439011
+                description:
+                  type: string
+                  minLength: 10
+                  example: Observation d'un tigre adulte dans la forêt
+                dangerLevel:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 4
+      responses:
+        '201':
+          description: Observation créée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Observation créée avec succès
+                  observation:
+                    $ref: '#/components/schemas/Observation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Trop d'observations pour cette espèce (règle des 5 minutes)
+
+  /api/observations/{id}/validate:
+    post:
+      summary: Valider une observation
+      description: Valider une observation en attente (EXPERT ou ADMIN)
+      tags:
+        - Observations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'observation
+      responses:
+        '200':
+          description: Observation validée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Observation validée avec succès
+                  observation:
+                    $ref: '#/components/schemas/Observation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/observations/{id}/reject:
+    post:
+      summary: Rejeter une observation
+      description: Rejeter une observation en attente (EXPERT ou ADMIN)
+      tags:
+        - Observations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'observation
+      responses:
+        '200':
+          description: Observation rejetée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Observation rejetée avec succès
+                  observation:
+                    $ref: '#/components/schemas/Observation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/observations/{id}:
+    delete:
+      summary: Supprimer une observation (soft delete)
+      description: Suppression logique d'une observation (ADMIN uniquement)
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'observation
+      responses:
+        '200':
+          description: Observation supprimée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Observation supprimée avec succès
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/observations/{id}/restore:
+    post:
+      summary: Restaurer une observation
+      description: Restaurer une observation supprimée (ADMIN uniquement)
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'observation
+      responses:
+        '200':
+          description: Observation restaurée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Observation restaurée avec succès
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/species/{id}:
+    delete:
+      summary: Supprimer une espèce (soft delete)
+      description: Suppression logique d'une espèce (ADMIN uniquement)
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'espèce
+      responses:
+        '200':
+          description: Espèce supprimée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Espèce supprimée avec succès
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/admin/users/{id}/history:
+    get:
+      summary: Historique d'un utilisateur
+      description: Récupérer l'historique des actions d'un utilisateur (ADMIN)
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'utilisateur
+      responses:
+        '200':
+          description: Historique de l'utilisateur
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/History'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/expert/species/{id}/history:
+    get:
+      summary: Historique d'une espèce
+      description: Récupérer l'historique des observations d'une espèce (EXPERT/ADMIN)
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID de l'espèce
+      responses:
+        '200':
+          description: Historique de l'espèce
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  speciesId:
+                    type: string
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/History'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Species:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        name:
+          type: string
+          example: Panthera tigris
+        authorId:
+          type: string
+          example: 507f191e810c19729de860ea
+        rarityScore:
+          type: number
+          minimum: 1
+          example: 1.5
+        createdAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        deletedBy:
+          type: string
+          nullable: true
+
+    Observation:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        speciesId:
+          type: string
+          example: 507f191e810c19729de860ea
+        authorId:
+          type: string
+          example: 507f191e810c19729de860eb
+        description:
+          type: string
+          example: Observation d'un tigre adulte
+        dangerLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        status:
+          type: string
+          enum: [PENDING, VALIDATED, REJECTED]
+          example: PENDING
+        validatedBy:
+          type: string
+          nullable: true
+        validatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        deletedBy:
+          type: string
+          nullable: true
+
+    History:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        action:
+          type: string
+          enum: [VALIDATED, REJECTED, DELETED, RESTORED]
+          example: VALIDATED
+        performedBy:
+          type: string
+          example: 507f191e810c19729de860ea
+        performedByRole:
+          type: string
+          enum: [USER, EXPERT, ADMIN]
+          example: EXPERT
+        targetType:
+          type: string
+          enum: [observation, species, user]
+          example: observation
+        targetId:
+          type: string
+          example: 507f191e810c19729de860eb
+        observationAuthorId:
+          type: string
+          nullable: true
+        observationSpeciesId:
+          type: string
+          nullable: true
+        speciesName:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Une erreur est survenue
+
+  responses:
+    BadRequest:
+      description: Requête invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Non authentifié
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Token manquant ou invalide
+
+    Forbidden:
+      description: Accès interdit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Accès réservé aux experts et administrateurs
+
+    NotFound:
+      description: Ressource non trouvée
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Ressource non trouvée

@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Taxonomy Service API
+  description: Service de statistiques taxonomiques
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:4003
+    description: Serveur de développement
+  - url: http://localhost:3003
+    description: Serveur interne (Docker)
+
+tags:
+  - name: Taxonomy
+    description: Statistiques et analyse taxonomique
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Vérifier l'état de santé du service
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service opérationnel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: taxonomy-service
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/taxonomy/stats:
+    get:
+      summary: Récupérer les statistiques taxonomiques
+      description: Obtenir des statistiques sur les espèces et observations
+      tags:
+        - Taxonomy
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistiques taxonomiques
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalSpecies:
+                    type: integer
+                    example: 150
+                    description: Nombre total d'espèces
+                  totalObservations:
+                    type: integer
+                    example: 523
+                    description: Nombre total d'observations validées
+                  observationsBySpecies:
+                    type: array
+                    description: Répartition des observations par espèce
+                    items:
+                      type: object
+                      properties:
+                        speciesId:
+                          type: string
+                          example: 507f1f77bcf86cd799439011
+                        speciesName:
+                          type: string
+                          example: Panthera tigris
+                        count:
+                          type: integer
+                          example: 25
+                  topSpecies:
+                    type: array
+                    description: Top 10 des espèces les plus observées
+                    items:
+                      type: object
+                      properties:
+                        speciesId:
+                          type: string
+                          example: 507f1f77bcf86cd799439011
+                        speciesName:
+                          type: string
+                          example: Panthera tigris
+                        observationCount:
+                          type: integer
+                          example: 25
+                        rarityScore:
+                          type: number
+                          example: 2.5
+                  rarityDistribution:
+                    type: object
+                    description: Distribution des espèces par niveau de rareté
+                    properties:
+                      common:
+                        type: integer
+                        example: 80
+                        description: Espèces communes (rarityScore < 1.5)
+                      uncommon:
+                        type: integer
+                        example: 45
+                        description: Espèces peu communes (1.5 ≤ rarityScore < 3)
+                      rare:
+                        type: integer
+                        example: 20
+                        description: Espèces rares (3 ≤ rarityScore < 5)
+                      veryRare:
+                        type: integer
+                        example: 5
+                        description: Espèces très rares (rarityScore ≥ 5)
+                  averageRarityScore:
+                    type: number
+                    example: 2.3
+                    description: Score de rareté moyen
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Date et heure de génération des statistiques
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtenu via le service d'authentification
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Une erreur est survenue
+
+  responses:
+    Unauthorized:
+      description: Non authentifié
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Token manquant ou invalide
+
+    InternalServerError:
+      description: Erreur interne du serveur
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Erreur interne du serveur
