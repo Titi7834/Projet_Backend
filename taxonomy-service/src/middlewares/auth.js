@@ -1,27 +1,59 @@
 import jwt from 'jsonwebtoken';
+import fetch from 'node-fetch';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3000';
 
 /**
  * Middleware d'authentification JWT
+ * Vérifie le token et récupère l'utilisateur depuis l'auth-service
  */
-export const authMiddleware = (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Token non fourni' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Token manquant ou invalide' 
+      });
     }
 
-    const token = authHeader.split(' ')[1];
-
+    const token = authHeader.substring(7);
+    
+    // Vérifier le token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Récupérer les infos utilisateur depuis auth-service
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const response = await fetch(`${AUTH_SERVICE_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(401).json({ 
+          success: false,
+          error: 'Utilisateur non trouvé' 
+        });
+      }
+
       req.user = decoded;
       next();
-    } catch (error) {
-      return res.status(401).json({ error: 'Token invalide ou expiré' });
+
+    } catch (fetchError) {
+      console.error('Erreur lors de la récupération utilisateur:', fetchError);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Erreur de communication avec auth-service' 
+      });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Erreur d\'authentification' });
+    return res.status(401).json({ 
+      success: false,
+      error: 'Token invalide ou expiré' 
+    });
   }
 };
 
