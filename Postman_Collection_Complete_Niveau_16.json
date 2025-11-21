@@ -1,0 +1,1332 @@
+{
+	"info": {
+		"_postman_id": "deepsea-archives-niveau-16",
+		"name": "DeepSea Archives - Niveau 16/20 COMPLET",
+		"description": "Collection complète pour tester auth-service, observation-service (avec modération avancée) et taxonomy-service. Niveau 16/20.\n\n⚠️ IMPORTANT : Exécuter les requêtes dans l'ordre :\n1. Health Checks - Vérifier que tous les services sont en ligne\n2. Authentification - Créer les comptes USER, EXPERT, ADMIN (les tokens JWT sont sauvegardés automatiquement)\n3. Gestion des Espèces - Créer au moins 2-3 espèces\n4. Gestion des Observations - Créer plusieurs observations pour chaque espèce\n5. Validation - Valider les observations avec le compte EXPERT\n6. Tester les routes de modération et d'historique\n7. Tester les statistiques taxonomiques\n\n🔧 CORRECTIONS APPORTÉES :\n- taxonomy-service : Ajout de la propagation du token JWT pour les appels inter-services\n- observation-service : Routes de modération correctement exposées sur /api/admin/* et /api/expert/*",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "authServiceUrl",
+			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "observationServiceUrl",
+			"value": "http://localhost:4002",
+			"type": "string"
+		},
+		{
+			"key": "taxonomyServiceUrl",
+			"value": "http://localhost:4003",
+			"type": "string"
+		},
+		{
+			"key": "userToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "expertToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "expertId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "speciesId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "speciesId2",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "observationId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "observationId2",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "🏥 Health Checks",
+			"item": [
+				{
+					"name": "Auth Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{authServiceUrl}}/health",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Observation Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{observationServiceUrl}}/health",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Taxonomy Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{taxonomyServiceUrl}}/health",
+							"host": ["{{taxonomyServiceUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Vérifier que tous les services sont en ligne"
+		},
+		{
+			"name": "👤 1. Authentification - Setup Comptes",
+			"item": [
+				{
+					"name": "1.1 Register USER",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('userToken', jsonData.token);",
+									"    pm.collectionVariables.set('userId', jsonData.user.id);",
+									"    console.log('✅ USER créé - Token:', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@deepsea.com\",\n  \"username\": \"user_observateur\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "{{authServiceUrl}}/auth/register",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Register EXPERT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('expertToken', jsonData.token);",
+									"    pm.collectionVariables.set('expertId', jsonData.user.id);",
+									"    console.log('✅ EXPERT créé - Token:', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"expert@deepsea.com\",\n  \"username\": \"expert_validateur\",\n  \"password\": \"password123\",\n  \"role\": \"EXPERT\"\n}"
+						},
+						"url": {
+							"raw": "{{authServiceUrl}}/auth/register",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Register ADMIN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('adminToken', jsonData.token);",
+									"    pm.collectionVariables.set('adminId', jsonData.user.id);",
+									"    console.log('✅ ADMIN créé - Token:', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@deepsea.com\",\n  \"username\": \"admin_moderateur\",\n  \"password\": \"password123\",\n  \"role\": \"ADMIN\"\n}"
+						},
+						"url": {
+							"raw": "{{authServiceUrl}}/auth/register",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.4 Login USER",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('userToken', jsonData.token);",
+									"    console.log('✅ USER connecté');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@deepsea.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{authServiceUrl}}/auth/login",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.5 Get Me (USER)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{authServiceUrl}}/auth/me",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["auth", "me"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.6 Get All Users (ADMIN)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{authServiceUrl}}/api/admin/users",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["api", "admin", "users"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Créer les comptes USER, EXPERT et ADMIN pour les tests"
+		},
+		{
+			"name": "🐙 2. Gestion des Espèces",
+			"item": [
+				{
+					"name": "2.1 Create Species - Calamar Géant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('speciesId', jsonData.id);",
+									"    console.log('✅ Espèce créée - ID:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Calamar Géant des Abysses\"\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Create Species - Poisson Dragon",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('speciesId2', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Poisson-Dragon Bioluminescent\"\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.3 Create Species - Méduse Abyssale",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Méduse Abyssale Luminescente\"\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.4 Get All Species",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.5 Get All Species (Sorted by Rarity)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species?sortByRarity=true",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species"],
+							"query": [
+								{
+									"key": "sortByRarity",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2.6 Get Species by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species/{{speciesId}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species", "{{speciesId}}"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Créer et gérer les espèces abyssales"
+		},
+		{
+			"name": "👁️ 3. Gestion des Observations",
+			"item": [
+				{
+					"name": "3.1 Create Observation 1 (Calamar)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('observationId', jsonData.id);",
+									"    console.log('✅ Observation créée - ID:', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Observation fascinante d'un calamar géant avec tentacules bioluminescents mesurant plus de 15 mètres dans les profondeurs abyssales à 3000m. Comportement de chasse agressif observé.\",\n  \"dangerLevel\": 5\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Create Observation 2 (Calamar)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('observationId2', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Spécimen en mode repos, tentacules repliés. Luminescence faible. Niveau de danger apparemment réduit lors de cette observation nocturne.\",\n  \"dangerLevel\": 2\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.3 Create Observation 3 (Poisson Dragon)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"speciesId\": \"{{speciesId2}}\",\n  \"description\": \"Poisson-dragon avec écailles phosphorescentes observé à 2500m. Prédateur redoutable avec dents acérées. Comportement territorial marqué.\",\n  \"dangerLevel\": 4\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.4 Get Observations for Species",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species/{{speciesId}}/observations",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species", "{{speciesId}}", "observations"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Créer des observations pour les espèces"
+		},
+		{
+			"name": "✅ 4. Validation/Rejet (EXPERT)",
+			"item": [
+				{
+					"name": "4.1 Validate Observation 1 (par EXPERT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations/{{observationId}}/validate",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations", "{{observationId}}", "validate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Validate Observation 2 (par EXPERT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations/{{observationId2}}/validate",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations", "{{observationId2}}", "validate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4.3 Reject Observation (TEST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations/{{observationId}}/reject",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations", "{{observationId}}", "reject"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4.4 Try Self-Validate (SHOULD FAIL)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations/{{observationId}}/validate",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations", "{{observationId}}", "validate"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Valider et rejeter les observations (EXPERT uniquement)"
+		},
+		{
+			"name": "🗑️ 5. Modération Avancée (NIVEAU 16)",
+			"item": [
+				{
+					"name": "5.1 Soft Delete Observation (ADMIN)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/observations/{{observationId}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "observations", "{{observationId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.2 Restore Observation (ADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/observations/{{observationId}}/restore",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "observations", "{{observationId}}", "restore"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.3 Soft Delete Species (ADMIN)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/species/{{speciesId2}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "species", "{{speciesId2}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.4 Try Soft Delete as USER (SHOULD FAIL)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/observations/{{observationId}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "observations", "{{observationId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5.5 Try Soft Delete as EXPERT (SHOULD FAIL)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/observations/{{observationId}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "observations", "{{observationId}}"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Soft delete et restauration (ADMIN uniquement) - Niveau 16/20"
+		},
+		{
+			"name": "📚 6. Historique (NIVEAU 16)",
+			"item": [
+				{
+					"name": "6.1 Get User History (ADMIN)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/users/{{userId}}/history",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "users", "{{userId}}", "history"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6.2 Get Species History (EXPERT)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/expert/species/{{speciesId}}/history",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "expert", "species", "{{speciesId}}", "history"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6.3 Get Species History (ADMIN)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/expert/species/{{speciesId}}/history",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "expert", "species", "{{speciesId}}", "history"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6.4 Try Get User History as USER (SHOULD FAIL)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/users/{{userId}}/history",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "users", "{{userId}}", "history"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6.5 Try Get Species History as USER (SHOULD FAIL)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/expert/species/{{speciesId}}/history",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "expert", "species", "{{speciesId}}", "history"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Consulter l'historique des actions - Niveau 16/20"
+		},
+		{
+			"name": "📊 7. Taxonomy Service (NIVEAU 16)",
+			"item": [
+				{
+					"name": "7.1 Get Taxonomy Stats (USER)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{taxonomyServiceUrl}}/api/taxonomy/stats",
+							"host": ["{{taxonomyServiceUrl}}"],
+							"path": ["api", "taxonomy", "stats"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7.2 Get Taxonomy Stats (EXPERT)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{taxonomyServiceUrl}}/api/taxonomy/stats",
+							"host": ["{{taxonomyServiceUrl}}"],
+							"path": ["api", "taxonomy", "stats"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7.3 Get Taxonomy Stats (ADMIN)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{taxonomyServiceUrl}}/api/taxonomy/stats",
+							"host": ["{{taxonomyServiceUrl}}"],
+							"path": ["api", "taxonomy", "stats"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7.4 Get Taxonomy Stats (No Auth - SHOULD FAIL)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{taxonomyServiceUrl}}/api/taxonomy/stats",
+							"host": ["{{taxonomyServiceUrl}}"],
+							"path": ["api", "taxonomy", "stats"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Statistiques taxonomiques et classification - Niveau 16/20"
+		},
+		{
+			"name": "🧪 8. Tests Additionnels",
+			"item": [
+				{
+					"name": "8.1 Create Multiple Observations (Batch)",
+					"item": [
+						{
+							"name": "Observation 4",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{userToken}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Tentacules avec ventouses de 5cm de diamètre. Capacité de camouflage extraordinaire détectée.\",\n  \"dangerLevel\": 3\n}"
+								},
+								"url": {
+									"raw": "{{observationServiceUrl}}/api/observations",
+									"host": ["{{observationServiceUrl}}"],
+									"path": ["api", "observations"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Observation 5",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{userToken}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Migration observée vers zone plus profonde. Comportement grégaire inhabituel avec formation de groupe de 5 individus.\",\n  \"dangerLevel\": 2\n}"
+								},
+								"url": {
+									"raw": "{{observationServiceUrl}}/api/observations",
+									"host": ["{{observationServiceUrl}}"],
+									"path": ["api", "observations"]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Observation 6",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{expertToken}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Spécimen juvénile découvert. Taille réduite mais déjà prédateur efficace avec tentacules rapides.\",\n  \"dangerLevel\": 4\n}"
+								},
+								"url": {
+									"raw": "{{observationServiceUrl}}/api/observations",
+									"host": ["{{observationServiceUrl}}"],
+									"path": ["api", "observations"]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Créer plusieurs observations pour enrichir les données"
+				},
+				{
+					"name": "8.2 Test Cooldown (SHOULD FAIL)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"speciesId\": \"{{speciesId}}\",\n  \"description\": \"Tentative de créer observation trop rapidement - devrait échouer car cooldown 5 minutes.\",\n  \"dangerLevel\": 1\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8.3 Check RarityScore Updated",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species/{{speciesId}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species", "{{speciesId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8.4 Check User Reputation",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{authServiceUrl}}/auth/me",
+							"host": ["{{authServiceUrl}}"],
+							"path": ["auth", "me"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Tests supplémentaires pour vérifier les règles métier"
+		},
+		{
+			"name": "🎯 9. Scénario Complet Niveau 16",
+			"item": [
+				{
+					"name": "Step 1 - Create New Species",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('testSpeciesId', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Kraken des Profondeurs\"\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/species",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "species"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 2 - Create Observation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('testObservationId', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"speciesId\": \"{{testSpeciesId}}\",\n  \"description\": \"Kraken mythique aperçu avec tentacules gigantesques. Créature extrêmement dangereuse et agressive envers submersible.\",\n  \"dangerLevel\": 5\n}"
+						},
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 3 - Validate Observation (EXPERT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expertToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/observations/{{testObservationId}}/validate",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "observations", "{{testObservationId}}", "validate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 4 - Soft Delete (ADMIN)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/observations/{{testObservationId}}",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "observations", "{{testObservationId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 5 - Restore (ADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/observations/{{testObservationId}}/restore",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "observations", "{{testObservationId}}", "restore"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 6 - Get History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{observationServiceUrl}}/api/admin/users/{{userId}}/history",
+							"host": ["{{observationServiceUrl}}"],
+							"path": ["api", "admin", "users", "{{userId}}", "history"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Step 7 - Get Taxonomy Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{taxonomyServiceUrl}}/api/taxonomy/stats",
+							"host": ["{{taxonomyServiceUrl}}"],
+							"path": ["api", "taxonomy", "stats"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Scénario complet pour tester toutes les fonctionnalités du niveau 16/20"
+		}
+	]
+}
