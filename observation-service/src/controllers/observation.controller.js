@@ -5,6 +5,8 @@ import {
   handleObservationValidated, 
   handleObservationRejected 
 } from '../services/reputation.service.js';
+import { recordHistory } from '../services/history.service.js';
+import { HistoryAction } from '../models/History.js';
 
 /**
  * Crée une nouvelle observation
@@ -149,6 +151,20 @@ export const validateObservation = async (req, res) => {
       req.user.role
     );
 
+    // Enregistrer dans l'historique
+    await recordHistory(
+      HistoryAction.VALIDATED,
+      req.user.id,
+      req.user.role,
+      'observation',
+      observation._id.toString(),
+      {
+        authorId: observation.authorId,
+        speciesId: observation.speciesId,
+        description: observation.description
+      }
+    );
+
     return res.status(200).json({
       id: observation._id,
       speciesId: observation.speciesId,
@@ -195,6 +211,20 @@ export const rejectObservation = async (req, res) => {
 
     // Gérer la réputation
     await handleObservationRejected(observation.authorId);
+
+    // Enregistrer dans l'historique
+    await recordHistory(
+      HistoryAction.REJECTED,
+      req.user.id,
+      req.user.role,
+      'observation',
+      observation._id.toString(),
+      {
+        authorId: observation.authorId,
+        speciesId: observation.speciesId,
+        description: observation.description
+      }
+    );
 
     return res.status(200).json({
       id: observation._id,

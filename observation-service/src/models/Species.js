@@ -17,6 +17,14 @@ const SpeciesSchema = new Schema({
     default: 1.0,
     min: [1, 'Le rarityScore ne peut pas être inférieur à 1']
   },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  deletedBy: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

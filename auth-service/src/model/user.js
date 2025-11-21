@@ -43,6 +43,16 @@ const userSchema = mongoose.Schema(
             min: [0, 'La réputation ne peut pas être négative']
         },
 
+        deletedAt: {
+            type: Date,
+            default: null
+        },
+
+        deletedBy: {
+            type: String,
+            default: null
+        },
+
         createdAt: {
             type: Date,
             default: Date.now

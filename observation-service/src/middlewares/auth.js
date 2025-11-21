@@ -91,3 +91,31 @@ export const requireAdmin = (req, res, next) => {
   }
   next();
 };
+
+export const isAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ 
+      error: 'Accès refusé. Rôle ADMIN requis.' 
+    });
+  }
+
+  next();
+};
+
+export const isExpertOrAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+
+  if (req.user.role !== 'EXPERT' && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ 
+      error: 'Accès refusé. Rôle EXPERT ou ADMIN requis.' 
+    });
+  }
+
+  next();
+};

@@ -1,31 +1,26 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectDB } from './config/database.js';
-import speciesRoutes from './routes/species.routes.js';
-import observationRoutes from './routes/observation.routes.js';
-import moderationRoutes from './routes/moderation.routes.js';
+import taxonomyRoutes from './routes/taxonomy.routes.js';
 
 // Charger les variables d'environnement
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3003;
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/species', speciesRoutes);
-app.use('/api/observations', observationRoutes);
-app.use('/api', moderationRoutes);
+app.use('/api/taxonomy', taxonomyRoutes);
 
 // Route de santé
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'observation-service',
+    service: 'taxonomy-service',
     timestamp: new Date().toISOString()
   });
 });
@@ -44,14 +39,11 @@ app.use((err, req, res, next) => {
 // Démarrage du serveur
 const startServer = async () => {
   try {
-    // Connexion à MongoDB
-    await connectDB();
-
-    // Démarrage du serveur
     app.listen(PORT, () => {
-      console.log(`🚀 observation-service démarré sur le port ${PORT}`);
+      console.log(`🚀 taxonomy-service démarré sur le port ${PORT}`);
       console.log(`📍 http://localhost:${PORT}`);
       console.log(`💚 Health check: http://localhost:${PORT}/health`);
+      console.log(`📊 Stats endpoint: http://localhost:${PORT}/api/taxonomy/stats`);
     });
   } catch (error) {
     console.error('❌ Erreur au démarrage:', error);

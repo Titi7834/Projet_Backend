@@ -48,6 +48,23 @@ services:
       - backend-network
     restart: unless-stopped
 
+  taxonomy-service:
+    build:
+      context: ./taxonomy-service
+      dockerfile: Dockerfile
+    container_name: taxonomy-service
+    ports:
+      - "4003:3003"
+    environment:
+      PORT: 3003
+      JWT_SECRET: your-secret-key-change-this-in-production
+      OBSERVATION_SERVICE_URL: http://observation-service:3002
+    depends_on:
+      - observation-service
+    networks:
+      - backend-network
+    restart: unless-stopped
+
 volumes:
   mongo-data:
 
